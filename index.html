@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity | Passport Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            padding: 4rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            transition: color 0.3s;
+        }
+
+        .upload-area:hover .upload-icon {
+            color: var(--primary);
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .upload-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Loading */
+        .loader {
+            display: none;
+            margin: 2rem auto;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Results Card */
+        #results {
+            display: none;
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .data-item {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s;
+        }
+
+        .data-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .value {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-main);
+            word-break: break-all;
+        }
+
+        .alert-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .confidence-low {
+            color: #facc15;
+        }
+
+        .success-icon {
+            color: var(--success);
+            margin-right: 0.5rem;
+        }
+
+        .raw-data-toggle {
+            display: block;
+            margin-top: 2rem;
+            color: var(--text-muted);
+            text-decoration: underline;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        pre {
+            background: #000;
+            padding: 1rem;
+            border-radius: 10px;
+            overflow-x: auto;
+            display: none;
+            margin-top: 1rem;
+            color: #4ade80;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Passport Reader</h1>
+            <p class="subtitle">Powered by Leo intelligence co.</p>
+        </header>
+
+        <div class="upload-area" id="dropZone">
+            <div class="upload-icon">📂</div>
+            <div class="upload-text">Drag & Drop Passport Image</div>
+            <div class="upload-hint">or click to browse</div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="loader" id="loader"></div>
+
+        <div id="errorBox" class="alert-box"></div>
+
+        <div id="results">
+            <div class="result-header">
+                <h2>Extraction Results</h2>
+                <span id="statusBadge" class="status-badge status-success">Success</span>
+            </div>
+
+            <div class="data-grid" id="dataGrid">
+                <!-- Data items injected here -->
+            </div>
+
+            <div class="raw-data-toggle" onclick="toggleRaw()">View Raw JSON</div>
+            <pre id="rawJson"></pre>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const loader = document.getElementById('loader');
+        const results = document.getElementById('results');
+        const dataGrid = document.getElementById('dataGrid');
+        const errorBox = document.getElementById('errorBox');
+        const rawJson = document.getElementById('rawJson');
+        const statusBadge = document.getElementById('statusBadge');
+
+        // Drag & Drop
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            uploadFile(files[0]);
+        }
+
+        async function uploadFile(file) {
+            // Reset UI
+            results.style.display = 'none';
+            errorBox.style.display = 'none';
+            loader.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                loader.style.display = 'none';
+
+                if (data.success && data.data) {
+                    showResults(data.data);
+                    rawJson.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    showError(data.error || "Failed to extract data. Make sure image contains a valid MRZ.");
+                    rawJson.textContent = JSON.stringify(data, null, 2);
+                    // Show partial results if available
+                    if (data.data) showResults(data.data, false);
+                }
+
+            } catch (err) {
+                loader.style.display = 'none';
+                showError("Server error: " + err.message);
+            }
+        }
+
+        function showResults(data, isValid = true) {
+            results.style.display = 'block';
+            dataGrid.innerHTML = '';
+
+            statusBadge.className = isValid ? 'status-badge status-success' : 'status-badge status-error';
+            statusBadge.textContent = isValid ? 'Valid Passport' : 'Validation Failed';
+
+            const fields = [
+                { label: 'Full Name', value: data.full_name },
+                { label: 'Passport Number', value: data.passport_number },
+                { label: 'Nationality', value: data.nationality },
+                { label: 'Date of Birth', value: data.date_of_birth },
+                { label: 'Sex', value: data.sex },
+                { label: 'Expiry Date', value: data.expiry_date },
+                { label: 'Country Code', value: data.country_code },
+                { label: 'Personal Number', value: data.personal_number || 'N/A' }
+            ];
+
+            fields.forEach(field => {
+                const item = document.createElement('div');
+                item.className = 'data-item';
+                item.innerHTML = `
+                    <div class="label">${field.label}</div>
+                    <div class="value">${field.value || '—'}</div>
+                `;
+                dataGrid.appendChild(item);
+            });
+
+            if (data.quality_warning) {
+                const warn = document.createElement('div');
+                warn.className = 'alert-box';
+                warn.style.display = 'block';
+                warn.style.marginTop = '1rem';
+                warn.style.borderColor = '#facc15';
+                warn.style.color = '#facc15';
+                warn.style.background = 'rgba(250, 204, 21, 0.1)';
+                warn.textContent = "⚠️ " + data.quality_warning;
+                results.insertBefore(warn, dataGrid);
+            }
+        }
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.style.display = 'block';
+        }
+
+        function toggleRaw() {
+            rawJson.style.display = rawJson.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
+</body>
+
+</html>
